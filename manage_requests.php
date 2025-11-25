@@ -32,67 +32,56 @@ $requests = $pdo->prepare("
 ");
 $requests->execute([$manager_id]);
 $requests = $requests->fetchAll();
+
+require_once 'header.php';
 ?>
 
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Manage Leave Requests</title>
-    <style>
-        body { font-family: Arial, sans-serif; max-width: 1000px; margin: 0 auto; padding: 20px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #ddd; }
-        th { background-color: #f8f9fa; }
-        .actions { display: flex; gap: 10px; }
-        .btn { padding: 5px 10px; border: none; border-radius: 3px; cursor: pointer; }
-        .btn-approve { background: #28a745; color: white; }
-        .btn-reject { background: #dc3545; color: white; }
-        .nav { margin-bottom: 20px; }
-    </style>
-</head>
-<body>
-    <div class="nav">
-        <a href="dashboard.php">Dashboard</a>
-    </div>
-    
+<div class="card">
     <h2>Manage Leave Requests</h2>
     
     <?php if (empty($requests)): ?>
         <p>No pending leave requests.</p>
     <?php else: ?>
-        <table>
-            <thead>
-                <tr>
-                    <th>Employee</th>
-                    <th>Leave Type</th>
-                    <th>Start Date</th>
-                    <th>End Date</th>
-                    <th>Reason</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php foreach ($requests as $request): ?>
+        <div class="table-container">
+            <table>
+                <thead>
                     <tr>
-                        <td><?php echo htmlspecialchars($request['username']); ?></td>
-                        <td><?php echo htmlspecialchars($request['leave_type']); ?></td>
-                        <td><?php echo $request['start_date']; ?></td>
-                        <td><?php echo $request['end_date']; ?></td>
-                        <td><?php echo htmlspecialchars($request['reason']); ?></td>
-                        <td>
-                            <form method="POST" style="display: inline;">
-                                <input type="hidden" name="request_id" value="<?php echo $request['id']; ?>">
-                                <textarea name="notes" placeholder="Optional notes" rows="2" style="width: 200px; margin-bottom: 5px;"></textarea>
-                                <div class="actions">
-                                    <button type="submit" name="action" value="approved" class="btn btn-approve">Approve</button>
-                                    <button type="submit" name="action" value="rejected" class="btn btn-reject">Reject</button>
-                                </div>
-                            </form>
-                        </td>
+                        <th>Employee</th>
+                        <th>Leave Type</th>
+                        <th>Duration</th>
+                        <th>Reason</th>
+                        <th>Actions</th>
                     </tr>
-                <?php endforeach; ?>
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    <?php foreach ($requests as $request): ?>
+                        <tr>
+                            <td>
+                                <div style="font-weight: 600;"><?php echo htmlspecialchars($request['username']); ?></div>
+                            </td>
+                            <td><?php echo htmlspecialchars($request['leave_type']); ?></td>
+                            <td>
+                                <?php echo $request['start_date']; ?> to <?php echo $request['end_date']; ?>
+                            </td>
+                            <td><?php echo htmlspecialchars($request['reason']); ?></td>
+                            <td style="min-width: 250px;">
+                                <form method="POST">
+                                    <input type="hidden" name="request_id" value="<?php echo $request['id']; ?>">
+                                    <textarea name="notes" placeholder="Add notes (optional)" rows="2" style="width: 100%; margin-bottom: 0.5rem;"></textarea>
+                                    <div style="display: flex; gap: 0.5rem;">
+                                        <button type="submit" name="action" value="approved" class="btn btn-sm btn-success">Approve</button>
+                                        <button type="submit" name="action" value="rejected" class="btn btn-sm btn-danger">Reject</button>
+                                    </div>
+                                </form>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
     <?php endif; ?>
+</div>
+
+</div> <!-- Close container opened in header.php -->
 </body>
 </html>

@@ -23,51 +23,32 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add_user'])) {
 }
 
 // Get all users and managers
-$users = $pdo->query("SELECT * FROM users ORDER BY role, username")->fetchAll();
+$users = $pdo->query("SELECT u.*, m.username as manager_name FROM users u LEFT JOIN users m ON u.manager_id = m.id ORDER BY u.role, u.username")->fetchAll();
 $managers = $pdo->query("SELECT * FROM users WHERE role = 'manager'")->fetchAll();
+
+require_once 'header.php';
 ?>
 
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Manage Users</title>
-    <style>
-        body { font-family: Arial, sans-serif; max-width: 1000px; margin: 0 auto; padding: 20px; }
-        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #ddd; }
-        th { background-color: #f8f9fa; }
-        .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; }
-        input, select { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
-        button { background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; }
-        .nav { margin-bottom: 20px; }
-    </style>
-</head>
-<body>
-    <div class="nav">
-        <a href="dashboard.php">Dashboard</a> | 
-        <a href="manage_policies.php">Manage Policies</a>
-    </div>
-    
+<div class="card" style="margin-bottom: 2rem;">
     <h2>Manage Users</h2>
     
     <h3>Add New User</h3>
     <form method="POST">
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+        <div class="grid grid-2">
             <div class="form-group">
-                <label>Username:</label>
-                <input type="text" name="username" required>
+                <label>Username</label>
+                <input type="text" name="username" required placeholder="Username">
             </div>
             <div class="form-group">
-                <label>Password:</label>
-                <input type="password" name="password" required>
+                <label>Password</label>
+                <input type="password" name="password" required placeholder="Password">
             </div>
             <div class="form-group">
-                <label>Email:</label>
-                <input type="email" name="email" required>
+                <label>Email</label>
+                <input type="email" name="email" required placeholder="Email address">
             </div>
             <div class="form-group">
-                <label>Role:</label>
+                <label>Role</label>
                 <select name="role" required>
                     <option value="employee">Employee</option>
                     <option value="manager">Manager</option>
@@ -75,7 +56,7 @@ $managers = $pdo->query("SELECT * FROM users WHERE role = 'manager'")->fetchAll(
                 </select>
             </div>
             <div class="form-group">
-                <label>Manager (for employees):</label>
+                <label>Manager (for employees)</label>
                 <select name="manager_id">
                     <option value="">Select Manager</option>
                     <?php foreach ($managers as $manager): ?>
@@ -84,9 +65,44 @@ $managers = $pdo->query("SELECT * FROM users WHERE role = 'manager'")->fetchAll(
                 </select>
             </div>
         </div>
-        <button type="submit" name="add_user">Add User</button>
+        <button type="submit" name="add_user" class="btn btn-primary">Add User</button>
     </form>
-    
-    
+</div>
+
+<div class="card">
+    <h3>Existing Users</h3>
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Username</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Manager</th>
+                    <th>Created At</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($users as $user): ?>
+                    <tr>
+                        <td>
+                            <div style="font-weight: 600;"><?php echo htmlspecialchars($user['username']); ?></div>
+                        </td>
+                        <td><?php echo htmlspecialchars($user['email']); ?></td>
+                        <td>
+                            <span class="status-badge status-<?php echo $user['role'] == 'admin' ? 'rejected' : ($user['role'] == 'manager' ? 'pending' : 'approved'); ?>">
+                                <?php echo ucfirst($user['role']); ?>
+                            </span>
+                        </td>
+                        <td><?php echo htmlspecialchars($user['manager_name'] ?? '-'); ?></td>
+                        <td><?php echo $user['created_at']; ?></td>
+                    </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+</div> <!-- Close container opened in header.php -->
 </body>
 </html>
