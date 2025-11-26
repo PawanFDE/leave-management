@@ -98,6 +98,4 @@ $policies = $pdo->query("SELECT * FROM leave_policies")->fetchAll();
     </form>
 </div>
 
-</div> <!-- Close container opened in header.php -->
-</body>
-</html>
+<?php require_once 'footer.php'; ?>

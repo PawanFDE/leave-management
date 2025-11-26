@@ -8,18 +8,36 @@ if (!$auth->isLoggedIn() || $auth->getUserRole() != 'admin') {
 }
 
 // Handle add user
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add_user'])) {
-    $username = $_POST['username'];
-    $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
-    $email = $_POST['email'];
-    $role = $_POST['role'];
-    $manager_id = $_POST['manager_id'] ?: null;
-    
-    $stmt = $pdo->prepare("INSERT INTO users (username, password, email, role, manager_id) VALUES (?, ?, ?, ?, ?)");
-    $stmt->execute([$username, $password, $email, $role, $manager_id]);
-    
-    header('Location: manage_users.php');
-    exit;
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    if (isset($_POST['add_user'])) {
+        $username = $_POST['username'];
+        $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
+        $email = $_POST['email'];
+        $role = $_POST['role'];
+        $manager_id = $_POST['manager_id'] ?: null;
+        
+        $stmt = $pdo->prepare("INSERT INTO users (username, password, email, role, manager_id) VALUES (?, ?, ?, ?, ?)");
+        $stmt->execute([$username, $password, $email, $role, $manager_id]);
+        
+        header('Location: manage_users.php');
+        exit;
+    } elseif (isset($_POST['delete_user'])) {
+        $user_id = $_POST['user_id'];
+        
+        // Prevent deleting self
+        if ($user_id != $auth->getUserId()) {
+            // First delete related leave requests
+            $stmt = $pdo->prepare("DELETE FROM leave_requests WHERE user_id = ?");
+            $stmt->execute([$user_id]);
+            
+            // Then delete the user
+            $stmt = $pdo->prepare("DELETE FROM users WHERE id = ?");
+            $stmt->execute([$user_id]);
+        }
+        
+        header('Location: manage_users.php');
+        exit;
+    }
 }
 
 // Get all users and managers
@@ -80,6 +98,7 @@ require_once 'header.php';
                     <th>Role</th>
                     <th>Manager</th>
                     <th>Created At</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -96,6 +115,14 @@ require_once 'header.php';
                         </td>
                         <td><?php echo htmlspecialchars($user['manager_name'] ?? '-'); ?></td>
                         <td><?php echo $user['created_at']; ?></td>
+                        <td>
+                            <?php if ($user['id'] != $auth->getUserId()): ?>
+                                <form method="POST" onsubmit="return confirm('Are you sure you want to delete this user?');" style="display: inline;">
+                                    <input type="hidden" name="user_id" value="<?php echo $user['id']; ?>">
+                                    <button type="submit" name="delete_user" class="btn btn-sm btn-danger">Delete</button>
+                                </form>
+                            <?php endif; ?>
+                        </td>
                     </tr>
                 <?php endforeach; ?>
             </tbody>
@@ -103,6 +130,4 @@ require_once 'header.php';
     </div>
 </div>
 
-</div> <!-- Close container opened in header.php -->
-</body>
-</html>
+<?php require_once 'footer.php'; ?>

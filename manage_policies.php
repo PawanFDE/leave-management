@@ -90,7 +90,4 @@ require_once 'header.php';
         </table>
     </div>
 </div>
-
-</div> <!-- Close container opened in header.php -->
-</body>
-</html>
+<?php require_once 'footer.php'; ?>     
