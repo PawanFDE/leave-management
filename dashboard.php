@@ -3,7 +3,7 @@ require_once 'auth.php';
 require_once 'config.php';
 
 if (!$auth->isLoggedIn()) {
-    header('Location: login.php');
+    header('Location: index.php');
     exit;
 }
 
