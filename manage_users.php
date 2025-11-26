@@ -55,7 +55,8 @@ require_once 'header.php';
         <div class="grid grid-2">
             <div class="form-group">
                 <label>Username</label>
-                <input type="text" name="username" required placeholder="Username">
+                <input type="text" name="username" id="username" required placeholder="Username">
+                <small id="username-feedback" style="display: block; margin-top: 5px; font-size: 0.875rem;"></small>
             </div>
             <div class="form-group">
                 <label>Password</label>
@@ -129,5 +130,54 @@ require_once 'header.php';
         </table>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const usernameInput = document.getElementById('username');
+    const feedback = document.getElementById('username-feedback');
+    const submitBtn = document.querySelector('button[name="add_user"]');
+
+    let timeout = null;
+
+    usernameInput.addEventListener('input', function() {
+        const username = this.value.trim();
+        
+        // Clear previous timeout
+        clearTimeout(timeout);
+
+        if (username.length > 0) {
+            // Set a small delay to avoid too many requests while typing
+            timeout = setTimeout(() => {
+                const formData = new FormData();
+                formData.append('username', username);
+
+                fetch('check_username.php', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.exists) {
+                        feedback.textContent = 'Username already exists';
+                        feedback.style.color = '#dc2626'; // Red color
+                        submitBtn.disabled = true;
+                        usernameInput.style.borderColor = '#dc2626';
+                    } else {
+                        feedback.textContent = 'Username available';
+                        feedback.style.color = '#16a34a'; // Green color
+                        submitBtn.disabled = false;
+                        usernameInput.style.borderColor = '#16a34a';
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+            }, 300); // 300ms delay
+        } else {
+            feedback.textContent = '';
+            submitBtn.disabled = false;
+            usernameInput.style.borderColor = '';
+        }
+    });
+});
+</script>
 
 <?php require_once 'footer.php'; ?>
