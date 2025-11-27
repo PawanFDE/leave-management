@@ -310,7 +310,7 @@ tr:hover td { background-color: #f8fafc; }
     background: var(--card-background);
     border-right: 1px solid var(--border-color);
     display: flex;
-    flex-direction: column;
+    flex-direction: column; /* Added this line */
     transition: width 0.3s ease;
     flex-shrink: 0;
     height: 100vh;
@@ -351,6 +351,12 @@ tr:hover td { background-color: #f8fafc; }
     flex: 1;
     overflow-y: auto;
     overflow-x: hidden;
+}
+
+.sidebar-footer { /* Added this block */
+    margin-top: auto;
+    padding: 1rem 0;
+    border-top: 1px solid var(--border-color);
 }
 
 .nav-item {
