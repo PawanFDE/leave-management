@@ -174,7 +174,7 @@ input:focus, select:focus, textarea:focus {
     border-radius: var(--radius-md);
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.2s ease;
     border: none;
     font-size: 0.95rem;
 }
@@ -190,13 +190,45 @@ input:focus, select:focus, textarea:focus {
     box-shadow: var(--shadow-md);
 }
 
+.btn-primary:active {
+    transform: translateY(0);
+}
+
 .btn-sm {
     padding: 0.4rem 0.8rem;
     font-size: 0.875rem;
 }
 
-.btn-success { background-color: var(--success-color); color: white; }
-.btn-danger { background-color: var(--danger-color); color: white; }
+.btn-success { 
+    background-color: var(--success-color); 
+    color: white; 
+}
+
+.btn-success:hover {
+    background-color: #059669;
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+.btn-success:active {
+    transform: translateY(0);
+}
+
+.btn-danger { 
+    background-color: var(--danger-color); 
+    color: white; 
+}
+
+.btn-danger:hover {
+    background-color: #dc2626;
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+.btn-danger:active {
+    transform: translateY(0);
+}
+
 .btn-block { width: 100%; }
 
 /* Tables */
