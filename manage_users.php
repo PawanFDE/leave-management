@@ -26,11 +26,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         
         // Prevent deleting self
         if ($user_id != $auth->getUserId()) {
-            // First delete related leave requests
+            // First, update any users who have this user as their manager
+            $stmt = $pdo->prepare("UPDATE users SET manager_id = NULL WHERE manager_id = ?");
+            $stmt->execute([$user_id]);
+            
+            // Then delete related leave requests
             $stmt = $pdo->prepare("DELETE FROM leave_requests WHERE user_id = ?");
             $stmt->execute([$user_id]);
             
-            // Then delete the user
+            // Finally delete the user
             $stmt = $pdo->prepare("DELETE FROM users WHERE id = ?");
             $stmt->execute([$user_id]);
         }
