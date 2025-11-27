@@ -20,29 +20,19 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $interval = $start->diff($end);
     $requested_days = $interval->days + 1;
 
-    // Get max days for this leave type
-    $stmt = $pdo->prepare("SELECT max_days FROM leave_policies WHERE leave_type = ?");
-    $stmt->execute([$leave_type]);
-    $policy = $stmt->fetch();
-    $max_days = $policy['max_days'];
-
-    // Calculate used days (approved + pending)
-    $stmt = $pdo->prepare("
-        SELECT SUM(DATEDIFF(end_date, start_date) + 1) as used_days 
-        FROM leave_requests 
-        WHERE user_id = ? 
-        AND leave_type = ? 
-        AND status IN ('approved', 'pending')
-    ");
-    $stmt->execute([$user_id, $leave_type]);
-    $result = $stmt->fetch();
-    $used_days = $result['used_days'] ?: 0;
+    // Get policy and balance info from session
+    $leave_balances = $_SESSION['leave_balances'] ?? [];
+    $max_days = $leave_balances[$leave_type]['max_days'] ?? 0;
+    $used_days = $leave_balances[$leave_type]['used_days'] ?? 0;
 
     if (($used_days + $requested_days) > $max_days) {
         $error = "Insufficient leave balance. You have used $used_days out of $max_days days for $leave_type. Requesting $requested_days days would exceed your limit.";
     } else {
         $stmt = $pdo->prepare("INSERT INTO leave_requests (user_id, leave_type, start_date, end_date, reason) VALUES (?, ?, ?, ?, ?)");
         $stmt->execute([$user_id, $leave_type, $start_date, $end_date, $reason]);
+        
+        // Unset session variable after use
+        unset($_SESSION['leave_balances']);
         
         header('Location: my_requests.php');
         exit;
@@ -51,6 +41,26 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
 // Get leave policies
 $policies = $pdo->query("SELECT * FROM leave_policies")->fetchAll();
+$user_id = $auth->getUserId();
+
+// Calculate balances and store in session
+$leave_balances = [];
+foreach ($policies as $policy) {
+    $stmt = $pdo->prepare("
+        SELECT SUM(DATEDIFF(end_date, start_date) + 1) as used_days 
+        FROM leave_requests 
+        WHERE user_id = ? AND leave_type = ? AND status IN ('approved', 'pending')
+    ");
+    $stmt->execute([$user_id, $policy['leave_type']]);
+    $used_days = $stmt->fetchColumn() ?: 0;
+    
+    $leave_balances[$policy['leave_type']] = [
+        'max_days' => $policy['max_days'],
+        'used_days' => $used_days,
+        'balance' => $policy['max_days'] - $used_days,
+    ];
+}
+$_SESSION['leave_balances'] = $leave_balances;
 ?>
 
 <?php require_once 'header.php'; ?>
@@ -70,8 +80,10 @@ $policies = $pdo->query("SELECT * FROM leave_policies")->fetchAll();
             <select name="leave_type" required>
                 <option value="">Select Leave Type</option>
                 <?php foreach ($policies as $policy): ?>
+                    <?php $balance_info = $leave_balances[$policy['leave_type']]; ?>
                     <option value="<?php echo $policy['leave_type']; ?>">
-                        <?php echo $policy['leave_type']; ?> (Max: <?php echo $policy['max_days']; ?> days)
+                        <?php echo $policy['leave_type']; ?> 
+                        (Balance: <?php echo $balance_info['balance']; ?> / <?php echo $balance_info['max_days']; ?> days)
                     </option>
                 <?php endforeach; ?>
             </select>
